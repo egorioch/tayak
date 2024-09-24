@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"unicode"
 )
 
@@ -26,37 +27,50 @@ func isOperation(sym rune) bool {
 
 func alg(str string) {
 	var stack []rune
-	var output []rune
+	var output []string
+	var number strings.Builder
 
 	// проблема в том, что я прохожусь по символам: `12` = '1', '2'
 	for _, s := range str {
-		if unicode.IsDigit(s) {
-			output = append(output, s)
-		} else if isOperation(s) {
+
+		if isOperation(s) {
+			if number.Len() > 0 {
+				output = append(output, number.String())
+				number.Reset()
+			}
+
 			if len(stack) == 0 {
 				stack = append(stack, s)
 			} else {
 				//substr := str[i : len(str)-1]
 				//runesSubstr := []rune(substr)
-				output = append(output, popBiggerPriority(&stack, s)...)
+				for _, r := range popBiggerPriority(&stack, s) {
+					output = append(output, string(r))
+				}
 
 				if s == '(' {
 					stack = append(stack, s)
 				} else if s == ')' {
 					if len(stack) > 0 {
-						for len(stack) > 0 && stack[len(stack)-1] != '(' {
-							output = append(output, pop(&stack))
+						for len(stack) > 0 {
+							if stack[len(stack)-1] != '(' {
+								output = append(output, string(pop(&stack)))
+							} else {
+								output = output[0 : len(output)-1]
+							}
 						}
 					}
 				} else {
 					stack = append(stack, s)
 				}
 			}
+		} else if unicode.IsDigit(s) {
+			number.WriteRune(s)
 		} else {
 			continue
 		}
-
 	}
+
 }
 
 func pop(stack *[]rune) rune {
@@ -81,6 +95,6 @@ func popBiggerPriority(stack *[]rune, sym rune) []rune {
 }
 
 func main() {
-	s := "(7+8)*(12+5)-19"
+	s := "(731+8)*(12+5)-19"
 	alg(s)
 }
